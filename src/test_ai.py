@@ -1,16 +1,15 @@
 """
 Test if OpenAI can extract structured data from receipt text
 """
-import os
+
 import json
 from openai import OpenAI
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
+# Import config
+from config import OPENAI_API_KEY
 
 # Initialize OpenAI
-client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+client = OpenAI(api_key=OPENAI_API_KEY)
+
 
 # Sample messy OCR text (replace with your actual OCR output)
 SAMPLE_TEXT = """

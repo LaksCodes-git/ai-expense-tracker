@@ -27,4 +27,10 @@ receipts/*.png
 receipts/*.pdf
 
 # Logs
-*.log
+*.log# Google Credentials
+credentials/
+*.json
+!requirements.txt
+# Google Credentials
+credentials/
+service_account.json

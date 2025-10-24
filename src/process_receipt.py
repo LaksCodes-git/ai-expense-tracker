@@ -9,15 +9,33 @@ from PIL import Image
 from openai import OpenAI
 from dotenv import load_dotenv
 
+# Import configuration
+from config import OPENAI_API_KEY, RECEIPTS_DIR, GOOGLE_SHEET_ID
+from sheets_helper import SheetsManager
+
 load_dotenv()
-client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+# Initialize OpenAI
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 def process_receipt(image_path):
     """
     Complete pipeline: Receipt image → Structured JSON
+    
+    Args:
+        image_path: str or Path object pointing to receipt image
     """
+    # Convert to Path object for consistent handling
+    image_path = Path(image_path)
+    
+    if not image_path.exists():
+        return {
+            "status": "error",
+            "message": f"Image not found: {image_path}"
+        }
+    
     print(f"\n{'='*60}")
-    print(f"🎯 PROCESSING: {image_path}")
+    print(f"🎯 PROCESSING: {image_path.name}")
+    print(f"   Full path: {image_path}")
     print(f"{'='*60}\n")
     
     # Step 1: OCR
@@ -81,11 +99,20 @@ def process_receipt(image_path):
 
 def test_multiple_receipts():
     """Test with all receipts in receipts/ folder"""
-    receipts_dir = Path("/Users/lakshmi/codeworkspace/ASPIRATIONAL/ai-expense-tracker/receipts")
-    receipt_files = list(receipts_dir.glob("*.jpg")) + list(receipts_dir.glob("*.png"))
+    
+    print(f"\n📁 Looking for receipts in: {RECEIPTS_DIR}")
+    
+    if not RECEIPTS_DIR.exists():
+        print(f"❌ Receipts directory not found: {RECEIPTS_DIR}")
+        print("💡 Creating directory...")
+        RECEIPTS_DIR.mkdir(parents=True, exist_ok=True)
+        print("✅ Directory created. Add some receipt images and try again.")
+        return
+    
+    receipt_files = list(RECEIPTS_DIR.glob("*.jpg")) + list(RECEIPTS_DIR.glob("*.png"))
     
     if not receipt_files:
-        print("❌ No receipt images found in receipts/ folder")
+        print(f"❌ No receipt images found in {RECEIPTS_DIR}")
         print("💡 Add some receipt images (jpg/png) to test")
         return
     
@@ -93,7 +120,7 @@ def test_multiple_receipts():
     
     results = []
     for receipt_file in receipt_files:
-        result = process_receipt(receipt_file)
+        result = process_receipt(receipt_file)  # Now using Path object
         results.append({
             "file": receipt_file.name,
             "status": result["status"],
@@ -112,6 +139,78 @@ def test_multiple_receipts():
     
     return results
 
+# Add this new function
+def process_and_save_receipt(image_path):
+    """
+    Complete pipeline: Image → OCR → AI → Google Sheets
+    """
+    print(f"\n{'='*60}")
+    print(f"🎯 PROCESSING & SAVING: {image_path}")
+    print(f"{'='*60}\n")
+    
+    # Step 1: Process receipt (existing function)
+    result = process_receipt(image_path)
+    
+    if result['status'] != 'success':
+        print(f"❌ Processing failed: {result.get('message')}")
+        return result
+    
+    # Step 2: Save to Google Sheets
+    print("\n💾 Saving to Google Sheets...")
+    try:
+        sheets_manager = SheetsManager()
+        sheets_manager.add_expense(result['data'])
+        print("✅ Saved to Google Sheets!")
+    except Exception as e:
+        print(f"⚠️  Warning: Could not save to sheets: {str(e)}")
+        # Don't fail completely if sheets fails
+    
+    return result
+
+
+# Update the test function at the bottom
+def test_full_pipeline():
+    """Test complete pipeline with Google Sheets"""
+    # receipts_dir = Path("receipts")
+    # receipt_files = list(receipts_dir.glob("*.jpg")) + list(receipts_dir.glob("*.png"))
+    print(f"\n📁 Looking for receipts in: {RECEIPTS_DIR}")
+    
+    if not RECEIPTS_DIR.exists():
+        print(f"❌ Receipts directory not found: {RECEIPTS_DIR}")
+        print("💡 Creating directory...")
+        RECEIPTS_DIR.mkdir(parents=True, exist_ok=True)
+        print("✅ Directory created. Add some receipt images and try again.")
+        return
+    
+    receipt_files = list(RECEIPTS_DIR.glob("*.jpg")) + list(RECEIPTS_DIR.glob("*.png"))
+    
+    if not receipt_files:
+        print("❌ No receipt images found in receipts/ folder")
+        return
+    
+    print(f"\n🧪 Testing FULL PIPELINE with {len(receipt_files)} receipt(s)\n")
+    
+    # Initialize sheets (create headers if needed)
+    sheets_manager = SheetsManager()
+    sheets_manager.setup_sheet()
+    
+    # Process each receipt
+    for receipt_file in receipt_files:
+        process_and_save_receipt(receipt_file)
+        print()  # Blank line between receipts
+    
+    print(f"\n{'='*60}")
+    print("✅ ALL RECEIPTS PROCESSED AND SAVED!")
+    print(f"{'='*60}")
+    print("\n🔗 Check your Google Sheet:")
+    print(f"https://docs.google.com/spreadsheets/d/{GOOGLE_SHEET_ID}/edit")
+    print()
+
+
 if __name__ == "__main__":
-    # Run tests
-    test_multiple_receipts()
+    # Run full pipeline test
+    test_full_pipeline()
+    
+# if __name__ == "__main__":
+#     # Run tests
+#     test_multiple_receipts()
