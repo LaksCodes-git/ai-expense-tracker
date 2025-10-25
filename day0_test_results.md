@@ -1,5 +1,8 @@
 Will be replacing test 7 and test 10 as they are not visible completely to extract the data. Test 10 seems very complex too. 
 
+TO DO : Still see isses with test image 8 , we may need to do some image augmentaton to align the receipts properly before running the OCR on the imgaes.
+
+
 🧪 Testing with 10 receipt(s)
 
 

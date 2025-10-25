@@ -15,6 +15,15 @@ load_dotenv(PROJECT_ROOT / '.env')
 CREDENTIALS_PATH = PROJECT_ROOT / 'credentials' / 'service_account.json'
 RECEIPTS_DIR = PROJECT_ROOT / 'receipts'
 
+# Add after CREDENTIALS_PATH line:
+GMAIL_CREDENTIALS_PATH = PROJECT_ROOT / 'credentials' / 'gmail_credentials.json'
+GMAIL_TOKEN_PATH = PROJECT_ROOT / 'credentials' / 'gmail_token.json'
+
+# Add after the existing verification:
+if not GMAIL_CREDENTIALS_PATH.exists():
+    print(f"⚠️  WARNING: Gmail credentials not found at: {GMAIL_CREDENTIALS_PATH}")
+    print(f"💡 You'll need this for email monitoring (Day 3)")
+    
 # Environment variables
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 GOOGLE_SHEET_ID = os.getenv('GOOGLE_SHEET_ID')

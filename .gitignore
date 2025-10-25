@@ -34,3 +34,4 @@ credentials/
 # Google Credentials
 credentials/
 service_account.json
+gmail_token.json
